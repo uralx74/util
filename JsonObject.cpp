@@ -25,9 +25,34 @@ String TJsonObject::readNode(const String& str, int& pos)
         return NULL;
     }
 
-    int p1 = pos;
+    int p1 = -1;
     int p2 = 0;
 
+    // Search the opening brace
+    for (int i = pos; i < _textLength; i++)
+    {
+        if ( str[i] != ' ' )   // Условие выхода
+        {
+            if ( str[i] == '{' )   // Условие выхода
+            {
+                p1 = i;
+                break;
+            }
+            else
+            {
+                _resultCode = RT_END_NODE;
+                return NULL;
+            }
+        }
+    }
+
+    if (p1 < 0)
+    {
+        _resultCode = RT_END_TEXT;
+        return NULL;
+    }
+
+    // Search the opening double quote
     for (int i = p1; ; i++)
     {
         if (i > _textLength)   // Условие выхода
@@ -60,15 +85,7 @@ String TJsonObject::readNode(const String& str, int& pos)
         }
     }
 
-/*    if ( p2 == 0 )
-    {
-        _resultCode = RT_END_TEXT;
-        pos = -1;
-    }
-    else
-    { */
-        pos = p2 + 1;
-    //}
+    pos = p2 + 1;
     return str.SubString(p1, p2-p1);
 }
 
@@ -85,12 +102,14 @@ String TJsonObject::readParamName(const String& str, int& pos)
     int p2 = 0;
 
     // Начало имени
-    for (int i = p1; ;i++)
+    for (int i = p1; i < _textLength ;i++)
     {
         // Условие выхода
         if (str[i] == '}')
         {
             //pos = -1;
+            pos = i + 1;
+
             _resultCode = RT_END_PARAMETERS;
             return NULL;
         }
@@ -210,7 +229,7 @@ Variant TJsonObject::readParamValueInteger(const String& str, int& pos)
     return str.SubString(p1, p2-p1);
 }
 
-
+/* Задает текст JSON */
 String TJsonObject::setText(const String& text)
 {
     _text = text;
@@ -218,6 +237,7 @@ String TJsonObject::setText(const String& text)
     _textLength = text.Length();
 }
 
+/* Разбор JSON*/
 void TJsonObject::parse()
 {
     _pos = 1;
@@ -228,8 +248,12 @@ void TJsonObject::parse()
     while ( _resultCode != RT_END_TEXT )
     {
         String sNode = readNode(_text, _pos);
+        if (_resultCode != RT_CONTINUOUS )
+        {
+            break;
+        }
 
-        while ( _resultCode != RT_END_PARAMETERS && _pos >= 0 )
+        while ( (_resultCode != RT_END_PARAMETERS )&& _pos >= 0 )
         {
             String sParamName = readParamName(_text, _pos);
             if ( _resultCode != RT_END_PARAMETERS )

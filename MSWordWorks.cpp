@@ -1,4 +1,5 @@
 #include "MSWordWorks.h"
+#include "JsonObject.h"
 #include <cassert>
 
 //---------------------------------------------------------------------------
@@ -1222,34 +1223,23 @@ void MSWordWorks::ReplaceFormFields(Variant Document, TDataSet* dataSet)
         String fieldName = "";
         bool isImg = false;
 
-        if (fieldNameCode.Pos("[IMG") == 1)
+
+        // “екст по умолчанию из пол€ анализируем как json
+        //String str = "\"img\":{\"name\"=\"visa\",\"zorder\"=5, \"width\"=\"100\", \"height\" = \"50\"}";
+
+        TJsonObject json(fieldNameCode);
+        json.parse();
+        TJsonNode* rootNode = json.getRootNode();
+        TJsonNode* imgSubNode = NULL;
+        if (rootNode != NULL)
         {
+            imgSubNode = rootNode->getSubNode("img");
+        }
 
-            String sss = getStrParamValue(fieldNameCode, "IMG", "ZORDER");
-            /*//fieldNameCode.Pos()
-            String blockName = "IMG";
-            String paramName = "ZORDER";
-            String paramValue = "";
-            int p0 = fieldNameCode.Pos("[" + blockName);
 
-            if (p0 >= 0)
-            {
-                int p1 = PosEx(paramName, fieldNameCode, PosEx(paramName, fieldNameCode, p0));
-                if (p1 > 0)
-                {
-                    p1 = PosEx("=", fieldNameCode, p1 + paramName.Length());
-                    p1 = PosEx("\"", fieldNameCode, p1 + 1);
-                }
-                if (p1 > 0)
-                {
-                    p1 = p1 + 1;
-                    //int offset = p1+1;
-                    int p2 = PosEx("\"", fieldNameCode, p1);
-                    paramValue = fieldNameCode.SubString(p1, p2-p1);
-                }
-            }     */
-
-            //fieldName = fieldNameCode.SubString(6, fieldNameCode.Length()-5);
+        if (imgSubNode != NULL)
+        {
+            Variant s = imgSubNode->getParam("zorder", 0);
             isImg = true;
         }
         else
